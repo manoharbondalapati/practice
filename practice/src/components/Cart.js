@@ -1,31 +1,38 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { incrementQuantity, decrementQuantity, removeFromCart, checkout } from '../redux/CartSlice';
+import { removeProductFromCart, adjustQuantity } from '../redux/CartSlice';
 
 const Cart = () => {
   const dispatch = useDispatch();
-  const cart = useSelector((state) => state.cart.cart);
+  const cartItems = useSelector(state => state.cart.cartItems);
 
-  const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const handleRemove = productId => {
+    dispatch(removeProductFromCart(productId));
+  };
+
+  const handleAdjustQuantity = (productId, quantity) => {
+    dispatch(adjustQuantity({ productId, quantity }));
+  };
 
   return (
     <div>
-      <h1>Cart</h1>
-      <ul>
-        {cart.map((item) => (
-          <li key={item.id}>
-            <h2>{item.title}</h2>
-            <img src={item.image} alt={item.title} style={{ width: '50px', height: '50px' }} />
-            <p>${item.price}</p>
-            <p>Quantity: {item.quantity}</p>
-            <button onClick={() => dispatch(incrementQuantity(item.id))}>+</button>
-            <button onClick={() => dispatch(decrementQuantity(item.id))}>-</button>
-            <button onClick={() => dispatch(removeFromCart(item.id))}>Remove</button>
-          </li>
-        ))}
-      </ul>
-      <h2>Total: ${total.toFixed(2)}</h2>
-      <button onClick={() => dispatch(checkout())}>Checkout</button>
+      <h2>Cart</h2>
+      {cartItems.length === 0 ? (
+        <div>Your cart is empty</div>
+      ) : (
+        cartItems.map(item => (
+          <div key={item.productId}>
+            <h3>{item.title}</h3>
+            <p>Quantity: 
+              <button onClick={() => handleAdjustQuantity(item.productId, item.quantity - 1)} disabled={item.quantity === 1}>-</button>
+              {item.quantity}
+              <button onClick={() => handleAdjustQuantity(item.productId, item.quantity + 1)}>+</button>
+            </p>
+            <p>Total: ${item.price * item.quantity}</p>
+            <button onClick={() => handleRemove(item.productId)}>Remove</button>
+          </div>
+        ))
+      )}
     </div>
   );
 };
