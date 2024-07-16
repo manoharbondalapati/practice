@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts, fetchCategories, filterProductsByCategory, sortProducts } from '../redux/ProductsSlice';
 import { addProductToCart } from '../redux/CartSlice';
 import { Link } from 'react-router-dom';
+import './ProductList.css';
 
 const ProductList = () => {
   const dispatch = useDispatch();
   const { categories, filteredProducts, status, error, sortBy } = useSelector(state => state.products);
+  
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -17,8 +19,8 @@ const ProductList = () => {
     dispatch(filterProductsByCategory(category));
   };
 
-  const handleSortChange = sortBy => {
-    dispatch(sortProducts(sortBy));
+  const handleSortChange = (value) => {
+    dispatch(sortProducts(value));
   };
 
   const handleAddToCart = product => {
@@ -35,8 +37,8 @@ const ProductList = () => {
   }
 
   return (
-    <div>
-      <nav>
+    <div className="product-list-container">
+      <nav className="category-nav">
         <ul>
           <li onClick={() => handleCategoryChange('all')}>All</li>
           {categories.map(cat => (
@@ -47,30 +49,33 @@ const ProductList = () => {
         </ul>
       </nav>
 
-      <div>
+      <div className="product-content">
+      <div className="sort-container">
         <label>Sort by:</label>
         <select value={sortBy} onChange={e => handleSortChange(e.target.value)}>
+          <option value="none" disabled>Select an option</option>
           <option value="priceLowToHigh">Price: Low to High</option>
           <option value="priceHighToLow">Price: High to Low</option>
         </select>
       </div>
 
-      <div className="product-list">
-        {filteredProducts.map(product => (
-          <div key={product.id} className="product-item">
-            <h3>{product.title}</h3>
-            <p>{product.description}</p>
-            <p>${product.price}</p>
-            <div className="product-buttons">
-              <Link to={`/product/${product.id}`} className="btn-details">
-                Details
-              </Link>
-              <button className="btn-add-to-cart" onClick={() => handleAddToCart(product)}>
-                Add to Cart
-              </button>
+        <div className="product-grid">
+          {filteredProducts.map(product => (
+            <div key={product.id} className="product-card">
+              <img src={product.image} alt={product.title} className="product-image" />
+              <h3>{product.title}</h3>
+              <p>${product.price}</p>
+              <div className="product-buttons">
+                <Link to={`/product/${product.id}`} className="btn-details">
+                  Details
+                </Link>
+                <button className="btn-add-to-cart" onClick={() => handleAddToCart(product)}>
+                  Add to Cart
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <footer>Footer content here</footer>

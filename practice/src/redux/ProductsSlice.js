@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 const initialState = {
@@ -8,92 +8,89 @@ const initialState = {
   selectedProduct: null,
   status: 'idle',
   error: null,
-  sortBy: 'priceLowToHigh', // Default sort option
+  sortBy: 'none', 
 };
 
-export const fetchProducts = createAsyncThunk('products/fetchProducts', async () => {
-  const response = await axios.get('https://fakestoreapi.com/products');
-  return response.data;
-});
 
-export const fetchCategories = createAsyncThunk('products/fetchCategories', async () => {
-  const response = await axios.get('https://fakestoreapi.com/products/categories');
-  return response.data;
-});
+const sortProductsList = (products, sortBy) => {
+  switch (sortBy) {
+    case 'priceLowToHigh':
+      return products.slice().sort((a, b) => a.price - b.price);
+    case 'priceHighToLow':
+      return products.slice().sort((a, b) => b.price - a.price);
+    default:
+      return products;
+  }
+};
 
-export const fetchProductById = createAsyncThunk('products/fetchProductById', async (productId) => {
-  const response = await axios.get(`https://fakestoreapi.com/products/${productId}`);
-  return response.data;
-});
+export const fetchProducts = () => async dispatch => {
+  dispatch(isLoading());
+  try {
+    const response = await axios.get('https://fakestoreapi.com/products');
+    dispatch(GetAllProducts(response.data));
+  } catch (err) {
+    dispatch(setError(err.toString()));
+  }
+};
+
+export const fetchCategories = () => async dispatch => {
+  try {
+    const response = await axios.get('https://fakestoreapi.com/products/categories');
+    dispatch(setCategories(response.data));
+  } catch (err) {
+    dispatch(setError(err.toString()));
+  }
+};
+
+export const fetchProductById = productId => async dispatch => {
+  dispatch(isLoading());
+  try {
+    const response = await axios.get(`https://fakestoreapi.com/products/${productId}`);
+    dispatch(setSelectedProduct(response.data));
+  } catch (err) {
+    dispatch(setError(err.toString()));
+  }
+};
 
 const productsSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
+    GetAllProducts(state, action) {
+      state.products = action.payload;
+      state.filteredProducts = sortProductsList(action.payload, state.sortBy);
+      state.status = 'succeeded';
+    },
+    isLoading(state) {
+      state.status = 'loading';
+    },
+    setCategories(state, action) {
+      state.categories = action.payload;
+    },
+    setSelectedProduct(state, action) {
+      state.selectedProduct = action.payload;
+      state.status = 'succeeded';
+    },
+    setError(state, action) {
+      state.status = 'failed';
+      state.error = action.payload;
+    },
     filterProductsByCategory(state, action) {
       const category = action.payload;
       if (category === 'all') {
-        state.filteredProducts = state.products;
+        state.filteredProducts = sortProductsList(state.products, state.sortBy);
       } else {
-        state.filteredProducts = state.products.filter(product => product.category === category);
+        const filtered = state.products.filter(product => product.category === category);
+        state.filteredProducts = sortProductsList(filtered, state.sortBy);
       }
     },
     sortProducts(state, action) {
-      const sortBy = action.payload;
-      state.sortBy = sortBy;
-      switch (sortBy) {
-        case 'priceLowToHigh':
-          state.filteredProducts.sort((a, b) => a.price - b.price);
-          break;
-        case 'priceHighToLow':
-          state.filteredProducts.sort((a, b) => b.price - a.price);
-          break;
-        default:
-          break;
-      }
+      state.sortBy = action.payload;
+      state.filteredProducts = sortProductsList(state.filteredProducts, state.sortBy);
     },
-  },
-  extraReducers(builder) {
-    builder
-      .addCase(fetchProducts.pending, state => {
-        state.status = 'loading';
-      })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.products = action.payload;
-        state.filteredProducts = action.payload.slice(); // Initialize filteredProducts with all products
-        switch (state.sortBy) {
-          case 'priceLowToHigh':
-            state.filteredProducts.sort((a, b) => a.price - b.price);
-            break;
-          case 'priceHighToLow':
-            state.filteredProducts.sort((a, b) => b.price - a.price);
-            break;
-          default:
-            break;
-        }
-      })
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      })
-      .addCase(fetchCategories.fulfilled, (state, action) => {
-        state.categories = action.payload;
-      })
-      .addCase(fetchProductById.pending, state => {
-        state.status = 'loading';
-      })
-      .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.selectedProduct = action.payload;
-      })
-      .addCase(fetchProductById.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      });
   },
 });
 
-export const { filterProductsByCategory, sortProducts } = productsSlice.actions;
+export const { GetAllProducts, setCategories, setSelectedProduct, setError, isLoading, filterProductsByCategory, sortProducts } = productsSlice.actions;
 
 export default productsSlice.reducer;
