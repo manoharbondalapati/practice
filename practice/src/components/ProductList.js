@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts, fetchCategories, filterProductsByCategory, sortProducts } from '../redux/ProductsSlice';
 import { addProductToCart } from '../redux/CartSlice';
@@ -8,7 +8,7 @@ import './ProductList.css';
 const ProductList = () => {
   const dispatch = useDispatch();
   const { categories, filteredProducts, status, error, sortBy } = useSelector(state => state.products);
-  
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -16,10 +16,11 @@ const ProductList = () => {
   }, [dispatch]);
 
   const handleCategoryChange = category => {
+    setSelectedCategory(category);
     dispatch(filterProductsByCategory(category));
   };
 
-  const handleSortChange = (value) => {
+  const handleSortChange = value => {
     dispatch(sortProducts(value));
   };
 
@@ -40,9 +41,18 @@ const ProductList = () => {
     <div className="product-list-container">
       <nav className="category-nav">
         <ul>
-          <li onClick={() => handleCategoryChange('all')}>All</li>
+          <li
+            className={selectedCategory === 'all' ? 'selected' : ''}
+            onClick={() => handleCategoryChange('all')}
+          >
+            All
+          </li>
           {categories.map(cat => (
-            <li key={cat} onClick={() => handleCategoryChange(cat)}>
+            <li
+              key={cat}
+              className={selectedCategory === cat ? 'selected' : ''}
+              onClick={() => handleCategoryChange(cat)}
+            >
               {cat}
             </li>
           ))}
@@ -50,14 +60,14 @@ const ProductList = () => {
       </nav>
 
       <div className="product-content">
-      <div className="sort-container">
-        <label>Sort by:</label>
-        <select value={sortBy} onChange={e => handleSortChange(e.target.value)}>
-          <option value="none" disabled>Select an option</option>
-          <option value="priceLowToHigh">Price: Low to High</option>
-          <option value="priceHighToLow">Price: High to Low</option>
-        </select>
-      </div>
+        <div className="sort-container">
+          <label>Sort by:</label>
+          <select value={sortBy} onChange={e => handleSortChange(e.target.value)}>
+            <option value="none" disabled>Select an option</option>
+            <option value="priceLowToHigh">Price: Low to High</option>
+            <option value="priceHighToLow">Price: High to Low</option>
+          </select>
+        </div>
 
         <div className="product-grid">
           {filteredProducts.map(product => (
