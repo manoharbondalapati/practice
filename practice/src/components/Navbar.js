@@ -51,7 +51,7 @@ const NavBar = () => {
       </div>
       <div className="navbar-cart">
         <Link to="/cart">
-          Cart <span>({cartItemCount})</span> 
+          Cart <span>{cartItemCount}</span> 
         </Link>
       </div>
     </nav>
